@@ -71,7 +71,7 @@ class QuadriflowRemesher(bpy.types.Operator):
             )
 
   cuda = BoolProperty(
-            name="Use CUD1A",
+            name="Use CUDA",
             description="Use CUDA",
             default=True,
             )
@@ -87,7 +87,7 @@ class QuadriflowRemesher(bpy.types.Operator):
     if self.cuda:
       quadriflow_exe = "cuda_%s" % quadriflow_exe
 
-    base_path = importlib.find_loader("quadriflow").path
+    base_path = importlib.find_loader(__name__).path
     base_path = os.path.dirname(base_path)
     return os.path.join(base_path, "bin", quadriflow_exe)
 
@@ -99,12 +99,9 @@ class QuadriflowRemesher(bpy.types.Operator):
     os.close(fh)
 
     try:
-      # export obj
+      print("Quadriflow Remesher > Exporting obj file...")
       bpy.ops.export_scene.obj(filepath=input_filepath, use_selection=True, use_materials=False)
 
-      print(self.faces)
-
-      # launch quadriflow
       arguments = [self.find_quadriflow(), "-i", input_filepath, "-o", output_filepath, "-f", str(self.faces)]
 
       if self.sharp:
@@ -116,9 +113,10 @@ class QuadriflowRemesher(bpy.types.Operator):
       if self.minimum_cost_flow:
         arguments.insert(-1, "-mcf")
 
+      print("Quadriflow Remesher > Launching: %s" % arguments)
       subprocess.run(arguments)
 
-      # import obj
+      print("Quadriflow Remesher > Importing remeshed obj file...")
       bpy.ops.import_scene.obj(filepath=output_filepath)
 
     finally:
@@ -133,6 +131,8 @@ class QuadriflowRemesher(bpy.types.Operator):
 def register():
   bpy.utils.register_class(QuadriflowRemesher)
 
+def unregister():
+  bpy.utils.unregister_class(QuadriflowRemesher)
 
 if __name__ == "__main__":
     register()
